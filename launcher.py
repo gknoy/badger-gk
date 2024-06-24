@@ -137,7 +137,8 @@ def render():
         icon = f"{EXAMPLE_DIR}/icon-{icon_label}.jpg"
         label = label.replace("_", " ")
         try:
-            render_icon(icon, label, display, jpeg, x)
+            # decorate label so we know it's working
+            render_icon(icon, f"^{label}", display, jpeg, x)
         except (RuntimeError, Exception) as e:
             print(f">>> exception while rendering icon {e}")
             for lib, ext in [
@@ -151,6 +152,7 @@ def render():
                 except (OSError, RuntimeError):
                     continue
             display.set_pen(0)
+            label = f"!{label}"
             w = display.measure_text(label, FONT_SIZE)
             display.text(label, int(x - (w / 2)), 16 + 80, WIDTH, FONT_SIZE)
 
