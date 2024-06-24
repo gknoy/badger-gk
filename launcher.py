@@ -104,6 +104,21 @@ def draw_disk_usage(x):
     display.text("{:.2f}%".format(f_used), x + 91, 4, WIDTH, 1.0)
 
 
+def render_icon(icon, label, display, jpeg, x):
+    """
+    # prototyping reusable icon rendering
+    # (todo: refactor to use App)
+    """
+    # render app icon
+    jpeg.open_file(icon)
+    jpeg.decode(x - 26, 30)
+
+    # render app label text
+    display.set_pen(0)
+    w = display.measure_text(label, FONT_SIZE)
+    display.text(label, int(x - (w / 2)), 16 + 80, WIDTH, FONT_SIZE)
+
+
 def render():
     display.set_pen(15)
     display.clear()
@@ -113,22 +128,24 @@ def render():
     # max_icons = min(3, len(examples[(state["page"] * 3) :]))
     max_icons = min(3, len(examples[(state["page"] * 3) :]))
 
+    # FIXME: loop over apps and call app.render_icon(...)
     for i in range(max_icons):
         x = centers[i]
         label = examples[i + (state["page"] * 3)]
         icon_label = label.replace("_", "-")
         icon = f"{EXAMPLE_DIR}/icon-{icon_label}"
         label = label.replace("_", " ")
-        for lib, ext in [(png, "png"), (jpeg, "jpg")]:
-            try:
-                lib.open_file(f"{icon}.{ext}")
-                lib.decode(x - 26, 30)
-                break
-            except (OSError, RuntimeError):
-                continue
-        display.set_pen(0)
-        w = display.measure_text(label, FONT_SIZE)
-        display.text(label, int(x - (w / 2)), 16 + 80, WIDTH, FONT_SIZE)
+        render_icon(icon, label, display, jpeg, x)
+        # for lib, ext in [(png, "png"), (jpeg, "jpg")]:
+        #     try:
+        #         lib.open_file(f"{icon}.{ext}")
+        #         lib.decode(x - 26, 30)
+        #         break
+        #     except (OSError, RuntimeError):
+        #         continue
+        # display.set_pen(0)
+        # w = display.measure_text(label, FONT_SIZE)
+        # display.text(label, int(x - (w / 2)), 16 + 80, WIDTH, FONT_SIZE)
 
     for i in range(MAX_PAGE):
         x = 286
