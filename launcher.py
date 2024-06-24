@@ -20,7 +20,7 @@ import jpegdec
 
 # TODO: dynamically get all apps in apps/ instead of importing them directly :-/
 # from apps import badge as badge_app
-# from apps.app_base import Example
+from apps.app_base import Example
 
 
 # CUSTOM_APPS = [badge_app]
@@ -61,6 +61,7 @@ badger_os.state_load("launcher", state)
 app_names = []  # FIXME
 # app_names = [app.name for app in CUSTOM_APPS]
 examples = [x[:-3] for x in os.listdir(EXAMPLE_DIR) if x.endswith(".py")]
+example_apps = [Example.from_name(name) for name in examples]
 
 # Approximate center lines for buttons A, B and C
 centers = (41, 147, 253)
@@ -132,6 +133,8 @@ def render():
     for i in range(max_icons):
         x = centers[i]
         label = examples[i + (state["page"] * 3)]
+        _app = example_apps[i + (state["page"] * 3)]
+
         icon_label = label.replace("_", "-")
         # png doesn't work anyway
         icon = f"{EXAMPLE_DIR}/icon-{icon_label}.jpg"
@@ -184,7 +187,7 @@ def launch_example(index):
     wait_for_user_to_release_buttons()
 
     # change from list of example filenames
-    # to list of App descriptions
+    # to list of App objects, using app.module_name instead of "file"
     file = examples[(state["page"] * 3) + index]
     file = f"{EXAMPLE_DIR}/{file}"
     print(f">>> launching {file}")

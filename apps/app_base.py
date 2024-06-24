@@ -8,10 +8,11 @@ WIDTH = 296
 
 
 class AppBase:
-    def __init__(self, name, icon, module_name):
+    def __init__(self, name, label, icon, module_name):
         # predefine
         self.name = name
-        self.icon = icon  # e.g. foo.jpg
+        self.label = label
+        self.icon = icon  # full path+ext
         self.module_name = module_name
         self.jpeg = None
         self.font_size = FONT_SIZE
@@ -35,4 +36,13 @@ class AppBase:
 
 
 class Example(AppBase):
-    pass
+    EXAMPLE_DIR = "/examples"
+
+    @classmethod
+    def from_name(cls, name):
+        icon_name_fragment = name.replace("_", "-")
+        # png doesn't work anyway
+        icon = f"{cls.EXAMPLE_DIR}/icon-{icon_name_fragment}.jpg"
+        label = name.replace("_", " ")
+        module_name = f"{cls.EXAMPLE_DIR}/{name}"
+        return cls(name=name, label=label, icon=icon, module_name=module_name)
