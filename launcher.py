@@ -133,7 +133,8 @@ def render():
         x = centers[i]
         label = examples[i + (state["page"] * 3)]
         icon_label = label.replace("_", "-")
-        icon = f"{EXAMPLE_DIR}/icon-{icon_label}"
+        # png doesn't work anyway
+        icon = f"{EXAMPLE_DIR}/icon-{icon_label}.jpg"
         label = label.replace("_", " ")
         render_icon(icon, label, display, jpeg, x)
         # for lib, ext in [(png, "png"), (jpeg, "jpg")]:
