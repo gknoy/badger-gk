@@ -26,7 +26,7 @@
 import badger2040
 import jpegdec
 
-# from apps.app_base import AppBase
+from apps.app_base import AppBase
 
 
 # Global Constants
@@ -229,12 +229,23 @@ detail2_text = truncatestring(
 #       Main program
 # ------------------------------
 
-draw_badge()
 
-while True:
-    # Sometimes a button press or hold will keep the system
-    # powered *through* HALT, so latch the power back on.
-    display.keepalive()
+class BadgeApp(AppBase):
+    def __init__(self):
+        self.name = "badge"
+        self.label = "Badge"
+        # self.icon = "/apps/badge/badge/icon.jpg"
+        self.icon = "/examples/icon-badge.jpg"
+        # badger_os uses this
+        self.module_name = "/apps/badge/badge"
 
-    # If on battery, halt the Badger to save power, it will wake up if any of the front buttons are pressed
-    display.halt()
+
+if __name__ == "/apps/badge/badge":
+    draw_badge()
+    while True:
+        # Sometimes a button press or hold will keep the system
+        # powered *through* HALT, so latch the power back on.
+        display.keepalive()
+
+        # If on battery, halt the Badger to save power, it will wake up if any of the front buttons are pressed
+        display.halt()

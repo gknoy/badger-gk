@@ -19,7 +19,7 @@ import jpegdec
 
 
 # TODO: dynamically get all apps in apps/ instead of importing them directly :-/
-# from apps import badge as badge_app
+from apps.badge.badge import BadgeApp
 from apps.app_base import Example
 
 
@@ -62,6 +62,7 @@ app_names = []  # FIXME
 # app_names = [app.name for app in CUSTOM_APPS]
 examples = [x[:-3] for x in os.listdir(EXAMPLE_DIR) if x.endswith(".py")]
 example_apps = [Example.from_name(name) for name in examples]
+all_apps = [BadgeApp()] + example_apps
 
 # Approximate center lines for buttons A, B and C
 centers = (41, 147, 253)
@@ -125,15 +126,14 @@ def render():
     display.clear()
     display.set_pen(0)
 
-    # TODO: include custom apps
     # max_icons = min(3, len(examples[(state["page"] * 3) :]))
-    max_icons = min(3, len(examples[(state["page"] * 3) :]))
+    max_icons = min(3, len(all_apps[(state["page"] * 3) :]))
 
     # FIXME: loop over apps and call app.render_icon(...)
     for i in range(max_icons):
         x = centers[i]
-        # TODO: use all apps, not only examples
-        app = example_apps[i + (state["page"] * 3)]
+        # app = example_apps[i + (state["page"] * 3)]
+        app = all_apps[i + (state["page"] * 3)]
 
         try:
             app.render_icon(display, jpeg, x)
@@ -183,14 +183,17 @@ def wait_for_user_to_release_buttons():
         time.sleep(0.01)
 
 
-def launch_example(index):
-    # FIXME: Rename to launch_app
+def launch_app(index):
     wait_for_user_to_release_buttons()
 
     # change from list of example filenames
     # to list of App objects, using app.module_name instead of "file"
-    file = examples[(state["page"] * 3) + index]
-    file = f"{EXAMPLE_DIR}/{file}"
+    # file = examples[(state["page"] * 3) + index]
+    # file = f"{EXAMPLE_DIR}/{file}"
+    # print(f">>> launching {file}")
+
+    app = all_apps[(state["page"] * 3) + index]
+    file = app.module_name
     print(f">>> launching {file}")
 
     for k in locals().keys():
@@ -206,13 +209,12 @@ def button(pin):
     global changed
     changed = True
 
-    # FIXME: launch app or example
     if pin == badger2040.BUTTON_A:
-        launch_example(0)
+        launch_app(0)
     if pin == badger2040.BUTTON_B:
-        launch_example(1)
+        launch_app(1)
     if pin == badger2040.BUTTON_C:
-        launch_example(2)
+        launch_app(2)
     if pin == badger2040.BUTTON_UP:
         state["page"] = (state["page"] - 1) % MAX_PAGE
         render()

@@ -2,6 +2,8 @@
 # utils to let us describe icon + module logic for apps
 """
 
+import badger_os
+
 # constants from from launcher
 FONT_SIZE = 2
 WIDTH = 296
@@ -14,7 +16,8 @@ class AppBase:
         self.label = label
         self.icon = icon  # full path+ext
         self.module_name = module_name
-        self.jpeg = None
+        # badger_os uses this:
+        # e.g. module_name="/apps/badge/badge"
         self.font_size = FONT_SIZE
 
     def render_icon(self, display, jpeg, x):
@@ -26,13 +29,20 @@ class AppBase:
         #   x: ofset to render at (one of 3 cols)
         """
         # render app icon
-        jpeg.open_file(self.icon)
-        jpeg.decode(x - 26, 30)
+        try:
+            jpeg.open_file(self.icon)
+            jpeg.decode(x - 26, 30)
+        except (RuntimeError, Exception) as e:
+            print(f">>> could not open {self.icon}")
 
         # render app label text
         display.set_pen(0)
-        w = display.measure_text(self.name, FONT_SIZE)
-        display.text(self.name, int(x - (w / 2)), 16 + 80, WIDTH, FONT_SIZE)
+        w = display.measure_text(self.label, FONT_SIZE)
+        display.text(self.label, int(x - (w / 2)), 16 + 80, WIDTH, FONT_SIZE)
+
+    def execute(self):
+        print(f">>> executing {self.module_name}")
+        badger_os.launch(self.module_name)
 
 
 class Example(AppBase):
