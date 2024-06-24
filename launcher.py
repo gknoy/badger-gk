@@ -136,17 +136,23 @@ def render():
         # png doesn't work anyway
         icon = f"{EXAMPLE_DIR}/icon-{icon_label}.jpg"
         label = label.replace("_", " ")
-        render_icon(icon, label, display, jpeg, x)
-        # for lib, ext in [(png, "png"), (jpeg, "jpg")]:
-        #     try:
-        #         lib.open_file(f"{icon}.{ext}")
-        #         lib.decode(x - 26, 30)
-        #         break
-        #     except (OSError, RuntimeError):
-        #         continue
-        # display.set_pen(0)
-        # w = display.measure_text(label, FONT_SIZE)
-        # display.text(label, int(x - (w / 2)), 16 + 80, WIDTH, FONT_SIZE)
+        try:
+            render_icon(icon, label, display, jpeg, x)
+        except (RuntimeError, Exception) as e:
+            print(f">>> exception while rendering icon {e}")
+            for lib, ext in [
+                # (png, "png"),
+                (jpeg, "jpg")
+            ]:
+                try:
+                    lib.open_file(f"{icon}.{ext}")
+                    lib.decode(x - 26, 30)
+                    break
+                except (OSError, RuntimeError):
+                    continue
+            display.set_pen(0)
+            w = display.measure_text(label, FONT_SIZE)
+            display.text(label, int(x - (w / 2)), 16 + 80, WIDTH, FONT_SIZE)
 
     for i in range(MAX_PAGE):
         x = 286
