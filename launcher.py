@@ -132,15 +132,9 @@ def render():
     # FIXME: loop over apps and call app.render_icon(...)
     for i in range(max_icons):
         x = centers[i]
-        label = examples[i + (state["page"] * 3)]
-
         # TODO: use all apps, not only examples
         app = example_apps[i + (state["page"] * 3)]
 
-        icon_label = label.replace("_", "-")
-        # png doesn't work anyway
-        icon = f"{EXAMPLE_DIR}/icon-{icon_label}.jpg"
-        label = label.replace("_", " ")
         try:
             app.render_icon(display, jpeg, x)
             # decorate label so we know it's working
@@ -148,16 +142,19 @@ def render():
         except (RuntimeError, Exception) as e:
             print(f">>> Using fallback rendering for {app.name}")
             print(f"    --> {e}")
-            for lib, ext in [
-                # (png, "png"),
-                (jpeg, "jpg")
-            ]:
-                try:
-                    lib.open_file(f"{icon}.{ext}")
-                    lib.decode(x - 26, 30)
-                    break
-                except (OSError, RuntimeError):
-                    continue
+            # label = examples[i + (state["page"] * 3)]
+            # icon_label = label.replace("_", "-")
+            # # png doesn't work anyway
+            # icon = f"{EXAMPLE_DIR}/icon-{icon_label}.jpg"
+            # label = label.replace("_", " ")
+            label = app.label
+            icon = app.icon
+            try:
+                # lib.open_file(f"{icon}.{ext}")
+                jpeg.open_file(icon)
+                jpeg.decode(x - 26, 30)
+            except (OSError, RuntimeError) as e:
+                print(f"  -> {e}")
             display.set_pen(0)
             label = f"!{label}"
             w = display.measure_text(label, FONT_SIZE)
