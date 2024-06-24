@@ -133,17 +133,21 @@ def render():
     for i in range(max_icons):
         x = centers[i]
         label = examples[i + (state["page"] * 3)]
-        _app = example_apps[i + (state["page"] * 3)]
+
+        # TODO: use all apps, not only examples
+        app = example_apps[i + (state["page"] * 3)]
 
         icon_label = label.replace("_", "-")
         # png doesn't work anyway
         icon = f"{EXAMPLE_DIR}/icon-{icon_label}.jpg"
         label = label.replace("_", " ")
         try:
+            app.render_icon(display, jpeg, x)
             # decorate label so we know it's working
-            render_icon(icon, f"^{label}", display, jpeg, x)
+            # render_icon(icon, f"^{label}", display, jpeg, x)
         except (RuntimeError, Exception) as e:
-            print(f">>> exception while rendering icon {e}")
+            print(f">>> Using fallback rendering for {app.name}")
+            print(f"    --> {e}")
             for lib, ext in [
                 # (png, "png"),
                 (jpeg, "jpg")
