@@ -1,12 +1,13 @@
 {
-    "topHeading": "Myriad Genetics",
+    "heading": "Myriad Genetics",
     "name": "Gabriel Knoy",
     "r1_title": "gknoy@myriad.com",
     "r1_text": "",
     "r2_title": "gabriel.knoy@gmail.com",
     "r2_text": "",
     "image": {
-        "file": "potrait-128.jpg",
-        "width": 128
+        "file": "portrait-92x128-dithered.jpg",
+        "width": 92,
+        "dithered": true
     }
 }

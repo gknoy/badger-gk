@@ -373,7 +373,8 @@ if __name__ == "/apps/badge/badge":
         detail2_text="",
         # badge_image="/apps/badge/data/portrait-128.jpg",
         # badge_image="/apps/badge/data/kelaan-portrait-135x128-bw2.jpg",
-        badge_image="/apps/badge/data/gknoy-badge-128.jpg",
+        # badge_image="/apps/badge/data/gknoy-badge-128.jpg",
+        badge_image="/apps/badge/data/portrait-92x128-dithered.jpg",
     )
     while True:
         # Sometimes a button press or hold will keep the system
