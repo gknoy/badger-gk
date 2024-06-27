@@ -23,28 +23,28 @@
 #   - parametrize-width of icon
 """
 
-import badger2040
+import badger_os
 import jpegdec
+import os
+from badger2040 import Badger2040, HEIGHT, WIDTH, UPDATE_NORMAL, BUTTON_UP, BUTTON_DOWN
+from ujson import load as load_json
 
 from apps.app_base import AppBase
 
-
-# Global Constants
-WIDTH = badger2040.WIDTH
-HEIGHT = badger2040.HEIGHT
+DATA_DIR = "/apps/badge/data"
 
 BLACK = 0
 WHITE = 15
 
 # FIXME: read from data
 # IMAGE_WIDTH = 104
-IMAGE_WIDTH = 128
+# IMAGE_WIDTH = 128
 
 # FIXME: get rid of field-specific globals constants
 HEADING_HEIGHT = 30
 DETAILS_HEIGHT = 20
 NAME_HEIGHT = HEIGHT - HEADING_HEIGHT - (DETAILS_HEIGHT * 2) - 2
-TEXT_WIDTH = WIDTH - IMAGE_WIDTH - 1
+# TEXT_WIDTH = WIDTH - IMAGE_WIDTH - 1
 
 HEADING_TEXT_SIZE = 0.6
 DETAILS_TEXT_SIZE = 0.5
@@ -54,7 +54,7 @@ NAME_PADDING = 20
 DETAIL_SPACING = 10
 
 # FIXME: list the json files
-BADGE_PATH = "/apps/badge/data/gknoy.json"
+# BADGE_PATH = "/apps/badge/data/gknoy.json"
 
 
 # ------------------------------
@@ -87,16 +87,6 @@ def scale_font_to_fit_width(display, text: str, size: float, max_width: int):
         font_size -= 0.01
         text_width = display.measure_text(text, font_size)
     return font_size
-
-
-# def _scale2(display, text: str, size: float, max_width: int):
-#     font_size = size if size >= 0.1 else 2.0
-#     while True:
-#         text_width = display.measure_text(text, font_size)
-#         if text_width >= max_width and font_size >= 0.1:
-#             font_size -= 0.01
-#         else:
-#             return font_size
 
 
 def render_text(
@@ -160,31 +150,44 @@ def draw_badge(
     jpeg,
     heading: str,
     name: str,
-    detail1_title: str,
-    detail1_text: str,
-    detail2_title: str,
-    detail2_text: str,
-    badge_image: str,  # todo: supportm multiple images?
+    r1_title: str,
+    r1_text: str,
+    r2_title: str,
+    r2_text: str,
+    image: dict,  # {file, width, dithered}
 ):
     display.set_pen(0)
     display.clear()
 
+    assert type(image) is dict, "image != {file,width,dithered}"
+
+    image_file = f"{DATA_DIR}/{image['file']}"
+    image_width = int(image["width"])
+    pre_dithered = image.get("dithered", False)
+
+    text_width = WIDTH - image_width - 1
+
     # Draw badge image
-    jpeg.open_file(badge_image)
-    jpeg.decode(WIDTH - IMAGE_WIDTH, 0)
+    jpeg.open_file(image_file)
+    jpeg.decode(
+        WIDTH - image_width,  # align on right border
+        0,  # y
+        0,  # scale: 0, and then 2/4/8 are half/qtr/eighth
+        pre_dithered,
+    )
 
     # Draw a border around the image
     display.set_pen(0)
-    display.line(WIDTH - IMAGE_WIDTH, 0, WIDTH - 1, 0)
-    display.line(WIDTH - IMAGE_WIDTH, 0, WIDTH - IMAGE_WIDTH, HEIGHT - 1)
-    display.line(WIDTH - IMAGE_WIDTH, HEIGHT - 1, WIDTH - 1, HEIGHT - 1)
+    display.line(WIDTH - image_width, 0, WIDTH - 1, 0)
+    display.line(WIDTH - image_width, 0, WIDTH - image_width, HEIGHT - 1)
+    display.line(WIDTH - image_width, HEIGHT - 1, WIDTH - 1, HEIGHT - 1)
     display.line(WIDTH - 1, 0, WIDTH - 1, HEIGHT - 1)
 
     # heading background
     display.set_pen(BLACK)
-    display.rectangle(1, 1, TEXT_WIDTH, HEADING_HEIGHT - 1)
+    display.rectangle(1, 1, text_width, HEADING_HEIGHT - 1)
 
-    # Draw the company
+    # Draw the heading
     render_text_drop_shadow(
         display=display,
         text=heading,
@@ -192,18 +195,13 @@ def draw_badge(
         y=(HEADING_HEIGHT // 2) + 1,
         width=WIDTH,
         text_size=HEADING_TEXT_SIZE,  # 0.6 !?
-        fg=BLACK,
-        bg=WHITE,
+        fg=WHITE,
+        bg=BLACK,
     )
-    # display.set_pen(15)  # Change this to 0 if a white background is used
-    # display.set_font("serif")
-    # display.text(
-    #     company, LEFT_PADDING, (COMPANY_HEIGHT // 2) + 1, WIDTH, COMPANY_TEXT_SIZE
-    # )
 
     # Draw a white background behind the name
     display.set_pen(WHITE)
-    display.rectangle(1, HEADING_HEIGHT + 1, TEXT_WIDTH, NAME_HEIGHT)
+    display.rectangle(1, HEADING_HEIGHT + 1, text_width, NAME_HEIGHT)
 
     # Draw the name, scaling it based on the available width
     # name_size = scale_font_to_fit_width(display, name, 2.0, (TEXT_WIDTH - NAME_PADDING))
@@ -220,26 +218,22 @@ def draw_badge(
         bg=WHITE,
         font="sans",
         scale_font=True,
-        max_text_width=(TEXT_WIDTH - 2 * NAME_PADDING),
+        max_text_width=(text_width - 2 * NAME_PADDING),
         offsets=[1, -1],
     )
-    # display.set_pen(0)
-    # display.set_font("sans")
-    # name_size = 2.0  # A sensible starting scale
 
     # Draw a white backgrounds behind the details
     display.set_pen(15)
-    display.rectangle(1, HEIGHT - DETAILS_HEIGHT * 2, TEXT_WIDTH, DETAILS_HEIGHT - 1)
-    display.rectangle(1, HEIGHT - DETAILS_HEIGHT, TEXT_WIDTH, DETAILS_HEIGHT - 1)
+    display.rectangle(1, HEIGHT - DETAILS_HEIGHT * 2, text_width, DETAILS_HEIGHT - 1)
+    display.rectangle(1, HEIGHT - DETAILS_HEIGHT, text_width, DETAILS_HEIGHT - 1)
 
-    # Draw the first detail's title and text
-
+    # Draw the first detail row's title and text
     # display.set_pen(0)
     display.set_font("sans")
-    d1_title_len = display.measure_text(detail1_title, DETAILS_TEXT_SIZE)
+    d1_title_len = display.measure_text(r1_title, DETAILS_TEXT_SIZE)
     render_text_drop_shadow(
         display=display,
-        text=detail1_title,
+        text=r1_title,
         x=LEFT_PADDING,
         y=HEIGHT - ((DETAILS_HEIGHT * 3) // 2),
         width=WIDTH,
@@ -251,7 +245,7 @@ def draw_badge(
     )
     render_text_drop_shadow(
         display=display,
-        text=detail1_text,
+        text=r1_text,
         x=5 + d1_title_len + DETAIL_SPACING,
         y=HEIGHT - ((DETAILS_HEIGHT * 3) // 2),
         width=WIDTH,
@@ -262,11 +256,11 @@ def draw_badge(
         offsets=[1, -1],
     )
 
-    # Draw the second detail's title and text
-    d2_title_len = display.measure_text(detail2_title, DETAILS_TEXT_SIZE)
+    # Draw the second detail row's title and text
+    d2_title_len = display.measure_text(r2_title, DETAILS_TEXT_SIZE)
     render_text_drop_shadow(
         display=display,
-        text=detail2_title,
+        text=r2_title,
         x=LEFT_PADDING,
         y=HEIGHT - (DETAILS_HEIGHT // 2),
         width=WIDTH,
@@ -278,7 +272,7 @@ def draw_badge(
     )
     render_text_drop_shadow(
         display=display,
-        text=detail2_text,
+        text=r2_text,
         x=LEFT_PADDING + d2_title_len + DETAIL_SPACING,
         y=HEIGHT - (DETAILS_HEIGHT // 2),
         width=WIDTH,
@@ -293,61 +287,58 @@ def draw_badge(
 
 
 # ------------------------------
-#        Program setup
+# reading options
+# ------------------------------
+
+
+def load_badge_configs():
+    return [
+        read_json(f"{DATA_DIR}/{fname}")
+        for fname in os.listdir(DATA_DIR)
+        if fname.endswith(".json")
+    ]
+
+
+def read_json(fname):
+    with open(fname) as f:
+        return load_json(f)
+
+
+# ------------------------------
+# Program setup
 # ------------------------------
 
 # Create a new Badger and set it to update NORMAL
-display = badger2040.Badger2040()
+display = Badger2040()
 display.led(128)
-display.set_update_speed(badger2040.UPDATE_NORMAL)
+display.set_update_speed(UPDATE_NORMAL)
 display.set_thickness(2)
 
 jpeg = jpegdec.JPEG(display.display)
 
-# FIXME READ/PICK JSON
-# # Open the badge file
-# try:
-#     badge = open(BADGE_PATH, "r")
-# except OSError:
-#     with open(BADGE_PATH, "w") as f:
-#         f.write(DEFAULT_TEXT)
-#         f.flush()
-#     badge = open(BADGE_PATH, "r")
-
-# # Read in the next 6 lines
-# heading = badge.readline()  # "mustelid inc"
-# name = badge.readline()  # "H. Badger"
-# detail1_title = badge.readline()  # "RP2040"
-# detail1_text = badge.readline()  # "2MB Flash"
-# detail2_title = badge.readline()  # "E ink"
-# detail2_text = badge.readline()  # "296x128px"
-# badge_image = badge.readline()  # /badges/badge.jpg
-
-# # Truncate all of the text (except for the name as that is scaled)
-# heading = truncatestring(heading, HEADING_TEXT_SIZE, TEXT_WIDTH)
-
-# detail1_title = truncatestring(detail1_title, DETAILS_TEXT_SIZE, TEXT_WIDTH)
-# detail1_text = truncatestring(
-#     detail1_text,
-#     DETAILS_TEXT_SIZE,
-#     TEXT_WIDTH
-#     - DETAIL_SPACING
-#     - display.measure_text(detail1_title, DETAILS_TEXT_SIZE),
-# )
-
-# detail2_title = truncatestring(detail2_title, DETAILS_TEXT_SIZE, TEXT_WIDTH)
-# detail2_text = truncatestring(
-#     detail2_text,
-#     DETAILS_TEXT_SIZE,
-#     TEXT_WIDTH
-#     - DETAIL_SPACING
-#     - display.measure_text(detail2_title, DETAILS_TEXT_SIZE),
-# )
+state = {"index": 0}
 
 
 # ------------------------------
 #       Main program
 # ------------------------------
+
+
+def handle_buttons(state, display, jpeg, badge_configs):
+    changed = False
+    if display.pressed(BUTTON_DOWN):
+        state["index"] = (state["index"] + 1) % len(badge_configs)
+        print(f">>> DOWN: {state['index']}")
+        changed = True
+
+    if display.pressed(BUTTON_UP):
+        state["index"] = (state["index"] - 1) % len(badge_configs)
+        print(f">>> UP: {state['index']}")
+        changed = True
+
+    if changed:
+        badger_os.state_save("badge", state)
+        draw_badge(display, jpeg, **(badge_configs[state["index"]]))
 
 
 class BadgeApp(AppBase):
@@ -361,25 +352,18 @@ class BadgeApp(AppBase):
 
 
 if __name__ == "/apps/badge/badge":
-    draw_badge(
-        # TODO: read config from a json file
-        display=display,
-        jpeg=jpeg,
-        heading="Myriad Genetics",
-        name="Gabriel Knoy",
-        detail1_title="gknoy@myriad.com",
-        detail1_text="",
-        detail2_title="Data Review Engineering",
-        detail2_text="",
-        # badge_image="/apps/badge/data/portrait-128.jpg",
-        # badge_image="/apps/badge/data/kelaan-portrait-135x128-bw2.jpg",
-        # badge_image="/apps/badge/data/gknoy-badge-128.jpg",
-        badge_image="/apps/badge/data/portrait-92x128-dithered.jpg",
-    )
+    # track state like image example
+
+    badger_os.state_load("badge", state)
+    badge_configs = load_badge_configs()
+    draw_badge(display, jpeg, **(badge_configs[state["index"]]))
+
     while True:
         # Sometimes a button press or hold will keep the system
         # powered *through* HALT, so latch the power back on.
         display.keepalive()
+
+        handle_buttons(state, display, jpeg, badge_configs)
 
         # If on battery, halt the Badger to save power, it will wake up if any of the front buttons are pressed
         display.halt()
