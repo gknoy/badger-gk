@@ -23,10 +23,11 @@
 #   - parametrize-width of icon
 """
 
-import badger_os
-import jpegdec
+# using type: ignore so that Pylance doesn't complain about Pimoroni libraries
+import badger_os  # type: ignore
+import jpegdec  # type: ignore
 import os
-from badger2040 import Badger2040, HEIGHT, WIDTH, UPDATE_NORMAL, BUTTON_UP, BUTTON_DOWN
+from badger2040 import Badger2040, HEIGHT, WIDTH, UPDATE_NORMAL, BUTTON_UP, BUTTON_DOWN  # type: ignore
 from ujson import load as load_json
 
 from apps.app_base import AppBase
